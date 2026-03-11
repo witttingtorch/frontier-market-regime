@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Streamlit App",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/bin/streamlit",
+            "args": ["run", "app/manual_entry.py"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Run Tests",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/bin/pytest",
+            "args": ["tests/", "-v"],
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Format Code",
+            "type": "shell",
+            "command": "${workspaceFolder}/venv/bin/black",
+            "args": ["src/", "app/", "pipeline/", "tests/"]
+        }
+    ]
+}
