@@ -27,3 +27,8 @@ htmlcov/
 .pytest_cache/
 .DS_Store
 .env
+venv/
+__pycache__/
+*.pyc
+.env
+*.log

@@ -69,7 +69,7 @@ def get_fx_data(market: str):
     try:
         if market == 'nairobi':
             collector = CBKCollector()
-            df = collector.get_rates()
+            df = collector.get_rates(currency='USD', start_date=datetime.now() - pd.Timedelta(days=30))
             return df, 'kes_per_usd' if 'kes_per_usd' in df.columns else 'rate'
         else:
             collector = CBACollector()
