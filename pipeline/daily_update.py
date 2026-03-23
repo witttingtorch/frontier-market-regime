@@ -14,6 +14,7 @@ from collectors.cba_collector import CBACollector
 from engine.regime_engine import RegimeEngine, Regime
 from utils.logging_config import setup_logging
 from utils.data_quality import validate_data
+from collectors.sentiment_collector import collect_sentiment
 
 logger = setup_logging()
 
@@ -74,14 +75,14 @@ class DailyPipeline:
         variables = {
             'fx_vol': engine.score_fx_volatility(fx_vol),
             'policy': engine.score_policy_trajectory(
-                manual_inputs.get('policy_rate', 13.0),
-                manual_inputs.get('policy_prev', 13.0),
-                manual_inputs.get('policy_3m', 13.5)
+                manual_inputs.get('policy_rate', 8.75),
+                manual_inputs.get('policy_prev', 9.0),
+                manual_inputs.get('policy_3m', 9.25)
             ),
             'reserves': engine.score_reserve_dynamics(
-                manual_inputs.get('reserves', 8000),
-                manual_inputs.get('reserves_prev', 7900),
-                manual_inputs.get('reserves_3m', 7800)
+                manual_inputs.get('reserves', 14597),
+                manual_inputs.get('reserves_prev', 14477),
+                manual_inputs.get('reserves_3m', 14237)
             ),
             'inflation': engine.score_inflation_momentum(
                 manual_inputs.get('cpi', 105.0),
@@ -158,6 +159,11 @@ class DailyPipeline:
                 if fx_data.empty:
                     logger.error(f"No FX data for {market} — skipping")
                     continue
+
+                # Collect sentiment before regime calculation
+                sentiment_df = collect_sentiment(save=True)
+                sentiment_score = int(sentiment_df["sentiment_score"].sum()) if not sentiment_df.empty else 0
+                logger.info(f"Sentiment score: {sentiment_score:+d}")
 
                 result = self.calculate_regime(market, fx_data)
                 logger.info(f"Regime: {result['regime']} (Score: {result['score']:+d})")

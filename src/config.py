@@ -12,7 +12,7 @@ class MarketConfig:
     currency_pair: str
     central_bank: str
     timezone: str
-    fx_vol_threshold_green: float = 0.04   # 4%
+    fx_vol_threshold_green: float = 0.05   # 5%
     fx_vol_threshold_red: float = 0.08     # 8%
     inflation_threshold_green: float = 0.05  # 5%
     inflation_threshold_red: float = 0.08    # 8%
@@ -27,7 +27,7 @@ MARKETS: Dict[str, MarketConfig] = {
         currency_pair='KESUSD',
         central_bank='CBK',
         timezone='Africa/Nairobi',
-        fx_vol_threshold_green=0.04,
+        fx_vol_threshold_green=0.05,
         fx_vol_threshold_red=0.08
     ),
     'baku': MarketConfig(

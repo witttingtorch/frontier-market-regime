@@ -100,7 +100,7 @@ class RegimeEngine:
         mom = (cpi_current - cpi_prev) / cpi_prev
         accelerating = mom > 0
         
-        if yoy < self.config.inflation_threshold_green and not accelerating:
+        if yoy < self.config.inflation_threshold_green and (not accelerating or yoy < 0.03):
             score, interp = 1, f"Low and stable ({yoy:.1%})"
         elif yoy > self.config.inflation_threshold_red and accelerating:
             score, interp = -1, f"High and accelerating ({yoy:.1%})"
@@ -132,7 +132,7 @@ class RegimeEngine:
         
         if instability:
             regime, source = Regime.INSTABILITY, "INSTABILITY_TRIGGER"
-        elif total_score >= 4:
+        elif total_score >= 3:
             regime, source = Regime.RISK_ON, "QUANTITATIVE"
         elif total_score >= 1:
             regime, source = Regime.DEFENSIVE, "QUANTITATIVE"

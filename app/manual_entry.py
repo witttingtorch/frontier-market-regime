@@ -16,9 +16,6 @@ from engine import RegimeEngine, Regime
 from collectors.cbk_collector import CBKCollector
 from collectors.cba_collector import CBACollector
 
-
-# ── Page config ───────────────────────────────────────────────────────────────
-
 st.set_page_config(
     page_title="Frontier Market Regime Classifier",
     page_icon="🌍",
@@ -29,43 +26,28 @@ st.set_page_config(
 st.markdown("""
 <style>
     .regime-risk-on {
-        background-color: #1a4731;
-        color: #2ecc71;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        font-size: 1.8rem;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 1rem;
+        background-color: #1a4731; color: #2ecc71;
+        padding: 1rem; border-radius: 0.5rem;
+        font-size: 1.8rem; font-weight: bold;
+        text-align: center; margin-bottom: 1rem;
     }
     .regime-defensive {
-        background-color: #4a3800;
-        color: #f39c12;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        font-size: 1.8rem;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 1rem;
+        background-color: #4a3800; color: #f39c12;
+        padding: 1rem; border-radius: 0.5rem;
+        font-size: 1.8rem; font-weight: bold;
+        text-align: center; margin-bottom: 1rem;
     }
     .regime-instability {
-        background-color: #4a1020;
-        color: #e74c3c;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        font-size: 1.8rem;
-        font-weight: bold;
-        text-align: center;
-        margin-bottom: 1rem;
+        background-color: #4a1020; color: #e74c3c;
+        padding: 1rem; border-radius: 0.5rem;
+        font-size: 1.8rem; font-weight: bold;
+        text-align: center; margin-bottom: 1rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
 def get_fx_data(market: str):
-    """Fetch latest FX data."""
     try:
         if market == 'nairobi':
             collector = CBKCollector()
@@ -81,7 +63,6 @@ def get_fx_data(market: str):
 
 
 def load_log(market_key: str) -> pd.DataFrame:
-    """Load existing classification log."""
     filepath = f"data/processed/{market_key}_regime_log.csv"
     try:
         return pd.read_csv(filepath)
@@ -90,7 +71,6 @@ def load_log(market_key: str) -> pd.DataFrame:
 
 
 def save_to_csv(record: dict, market_key: str) -> pd.DataFrame:
-    """Append record to CSV log."""
     os.makedirs('data/processed', exist_ok=True)
     filepath = f"data/processed/{market_key}_regime_log.csv"
     try:
@@ -102,37 +82,26 @@ def save_to_csv(record: dict, market_key: str) -> pd.DataFrame:
     return updated
 
 
-# ── Session state init ────────────────────────────────────────────────────────
-
-if 'fx_rate_value' not in st.session_state:
-    st.session_state['fx_rate_value'] = 129.16
-if 'fetched_rate_display' not in st.session_state:
-    st.session_state['fetched_rate_display'] = None
-if 'inputs' not in st.session_state:
-    st.session_state['inputs'] = {}
-if 'result' not in st.session_state:
-    st.session_state['result'] = None
-
-
-# ── Sidebar ───────────────────────────────────────────────────────────────────
+for key, val in [
+    ('fx_rate_value', 129.16),
+    ('fetched_rate_display', None),
+    ('inputs', {}),
+    ('result', None)
+]:
+    if key not in st.session_state:
+        st.session_state[key] = val
 
 st.title("🌍 Frontier Market Regime Classification")
 st.markdown("*Hybrid Human-Quantitative Architecture for Non-Stationary Environments*")
 st.markdown("---")
 
 st.sidebar.header("Settings")
-
-market = st.sidebar.selectbox(
-    "Select Market",
-    ["Nairobi (KES)", "Baku (AZN)"],
-    index=0
-)
+market = st.sidebar.selectbox("Select Market", ["Nairobi (KES)", "Baku (AZN)"], index=0)
 market_key = 'nairobi' if 'Nairobi' in market else 'baku'
 config = MARKETS[market_key]
 
 st.sidebar.markdown(f"**Central Bank:** {config.central_bank}")
 st.sidebar.markdown(f"**Currency:** {config.currency_pair}")
-
 st.sidebar.markdown("---")
 st.sidebar.subheader("Auto-Fetch Data")
 
@@ -151,28 +120,19 @@ if st.sidebar.button("🔄 Fetch Latest FX Rates"):
 if st.session_state['fetched_rate_display']:
     st.sidebar.success(st.session_state['fetched_rate_display'])
 
-
-# ── Tabs ──────────────────────────────────────────────────────────────────────
-
 tab1, tab2, tab3 = st.tabs(["📊 Data Entry", "📈 Analysis", "📝 Logs"])
-
-
-# ── TAB 1 — Data Entry ────────────────────────────────────────────────────────
 
 with tab1:
     st.header("Market Data Entry")
-
     col1, col2, col3 = st.columns(3)
 
     with col1:
         st.subheader("1. FX & Monetary")
 
-        # No key= — allows session state to update value on rerun
         fx_rate = st.number_input(
             f"{config.currency_pair} Rate",
             value=float(st.session_state['fx_rate_value']),
-            step=0.01,
-            format="%.4f"
+            step=0.01, format="%.4f"
         )
         st.session_state['fx_rate_value'] = fx_rate
 
@@ -184,9 +144,20 @@ with tab1:
 
         policy_rate = st.number_input(
             "Central Bank Rate (%)",
-            value=13.0, step=0.25,
-            key='policy_rate_input'
+            value=8.75 if market_key == 'nairobi' else 7.0,
+            step=0.25, key='policy_rate_input'
         )
+
+        interbank_rate = st.number_input(
+            "Interbank Rate (%)",
+            value=8.682 if market_key == 'nairobi' else 7.15,
+            step=0.05, key='interbank_rate_input',
+            help="Daily interbank lending rate. Spread vs policy rate = liquidity signal."
+        )
+
+        interbank_spread_bps = round((interbank_rate - policy_rate) * 100, 2)
+        spread_color = "🟢" if interbank_spread_bps < 50 else "🟡" if interbank_spread_bps < 150 else "🔴"
+        st.markdown(f"**Interbank Spread:** {spread_color} `{interbank_spread_bps} bps`")
 
         policy_direction = st.selectbox(
             "Policy Direction",
@@ -199,37 +170,37 @@ with tab1:
 
         reserves = st.number_input(
             "FX Reserves (USD Millions)",
-            value=8500.0, step=100.0,
-            key='reserves_input'
+            value=14597.0, step=100.0, key='reserves_input'
         )
         reserves_change = st.number_input(
             "Monthly Change (USD Millions)",
-            value=-50.0, step=10.0,
-            key='reserves_chg_input'
+            value=120.0, step=10.0, key='reserves_chg_input'
         )
         cpi_yoy = st.number_input(
             "CPI YoY Inflation (%)",
-            value=5.5, step=0.1,
-            key='cpi_yoy_input'
+            value=4.4, step=0.1, key='cpi_yoy_input'
         ) / 100
         cpi_mom = st.number_input(
             "CPI MoM Change (%)",
-            value=0.3, step=0.1,
-            key='cpi_mom_input'
+            value=0.3, step=0.1, key='cpi_mom_input'
         ) / 100
+
+        tbill_91 = st.number_input(
+            "91-Day T-Bill Yield (%)",
+            value=7.5636, step=0.05, key='tbill_input',
+            help="Weekly CBK auction result. Rising yield = liquidity tightening."
+        )
 
     with col3:
         st.subheader("3. Capital Flows")
 
         flow_z = st.number_input(
             "Capital Flow Z-Score",
-            value=-0.3, step=0.1,
-            key='flow_z_input'
+            value=-0.3, step=0.1, key='flow_z_input'
         )
         flow_usd = st.number_input(
             "Net Flow (USD Millions)",
-            value=-50.0, step=10.0,
-            key='flow_usd_input'
+            value=-50.0, step=10.0, key='flow_usd_input'
         )
 
         st.markdown("---")
@@ -238,10 +209,8 @@ with tab1:
         override = st.selectbox(
             "Override Regime (Optional)",
             ["None", "Risk-On", "Defensive", "Instability"],
-            index=0,
-            key='override_input'
+            index=0, key='override_input'
         )
-
         override_reason = st.text_area(
             "Override Reasoning",
             placeholder="Why are you overriding the model?",
@@ -249,12 +218,11 @@ with tab1:
         )
 
     st.markdown("---")
-
     col_left, col_mid, col_right = st.columns([1, 2, 1])
+
     with col_mid:
         if st.button("🔍 CALCULATE REGIME", type="primary", use_container_width=True):
             with st.spinner("Calculating..."):
-
                 engine = RegimeEngine(config)
 
                 variables = {
@@ -295,11 +263,14 @@ with tab1:
                     'fx_rate': fx_rate,
                     'fx_vol': fx_vol,
                     'policy_rate': policy_rate,
+                    'interbank_rate': interbank_rate,
+                    'interbank_spread_bps': interbank_spread_bps,
                     'policy_direction': policy_direction,
                     'reserves': reserves,
                     'reserves_change': reserves_change,
                     'cpi_yoy': cpi_yoy,
                     'cpi_mom': cpi_mom,
+                    'tbill_91': tbill_91,
                     'flow_z': flow_z,
                     'flow_usd': flow_usd,
                     'override': override,
@@ -308,9 +279,6 @@ with tab1:
 
                 st.success("Calculation complete! Go to Analysis tab to view and save.")
 
-
-# ── TAB 2 — Analysis ──────────────────────────────────────────────────────────
-
 with tab2:
     st.header("Regime Analysis")
 
@@ -318,17 +286,16 @@ with tab2:
         result = st.session_state['result']
         inputs = st.session_state.get('inputs', {})
 
-        # Regime display with CSS
         regime_class = {
-            Regime.RISK_ON:      "regime-risk-on",
-            Regime.DEFENSIVE:    "regime-defensive",
-            Regime.INSTABILITY:  "regime-instability"
+            Regime.RISK_ON:     "regime-risk-on",
+            Regime.DEFENSIVE:   "regime-defensive",
+            Regime.INSTABILITY: "regime-instability"
         }.get(result['regime'], "regime-defensive")
 
         regime_emoji = {
-            Regime.RISK_ON:      "🟢",
-            Regime.DEFENSIVE:    "🟡",
-            Regime.INSTABILITY:  "🔴"
+            Regime.RISK_ON:     "🟢",
+            Regime.DEFENSIVE:   "🟡",
+            Regime.INSTABILITY: "🔴"
         }.get(result['regime'], "⚪")
 
         st.markdown(
@@ -336,7 +303,7 @@ with tab2:
             unsafe_allow_html=True
         )
 
-        col1, col2, col3 = st.columns(3)
+        col1, col2, col3, col4 = st.columns(4)
         col1.metric("Aggregate Score", f"{result['score']:+d}")
         col2.metric("Source", result['source'])
         col3.metric(
@@ -345,6 +312,7 @@ with tab2:
             else "Medium" if abs(result['score']) >= 2
             else "Low"
         )
+        col4.metric("Interbank Spread", f"{inputs.get('interbank_spread_bps', 0)} bps")
 
         if inputs.get('override_reason'):
             st.info(f"**Override Reasoning:** {inputs['override_reason']}")
@@ -364,14 +332,23 @@ with tab2:
         df_vars = pd.DataFrame(var_data)
 
         def color_score(val):
-            if val == 1:   return 'background-color: #1a4731; color: #2ecc71'
-            if val == -1:  return 'background-color: #4a1020; color: #e74c3c'
+            if val == 1:  return 'background-color: #1a4731; color: #2ecc71'
+            if val == -1: return 'background-color: #4a1020; color: #e74c3c'
             return 'background-color: #4a3800; color: #f39c12'
 
         st.dataframe(
             df_vars.style.map(color_score, subset=['Score']),
             use_container_width=True
         )
+
+        st.subheader("Liquidity Indicators")
+        liq1, liq2, liq3 = st.columns(3)
+        spread = inputs.get('interbank_spread_bps', 0)
+        liq1.metric("Interbank Spread", f"{spread} bps",
+                    delta="⚠️ Elevated" if spread > 100 else "✅ Normal")
+        tbill_spread = round((inputs.get('tbill_91', 0) - inputs.get('policy_rate', 0)) * 100, 1)
+        liq2.metric("T-Bill/Policy Spread", f"{tbill_spread} bps")
+        liq3.metric("Reserves Change", f"{inputs.get('reserves_change', 0):+.0f} USD M")
 
         with st.expander("View Full Report"):
             st.text(result['report'])
@@ -398,11 +375,14 @@ with tab2:
                     'fx_rate': inputs.get('fx_rate', 0),
                     'fx_volatility_pct': round(inputs.get('fx_vol', 0) * 100, 4),
                     'policy_rate': inputs.get('policy_rate', 0),
+                    'interbank_rate': inputs.get('interbank_rate', 0),
+                    'interbank_spread_bps': inputs.get('interbank_spread_bps', 0),
                     'policy_direction': inputs.get('policy_direction', ''),
                     'reserves_usd_m': inputs.get('reserves', 0),
                     'reserves_change_usd_m': inputs.get('reserves_change', 0),
                     'cpi_yoy_pct': round(inputs.get('cpi_yoy', 0) * 100, 4),
                     'cpi_mom_pct': round(inputs.get('cpi_mom', 0) * 100, 4),
+                    'tbill_91_pct': inputs.get('tbill_91', 0),
                     'flow_z_score': inputs.get('flow_z', 0),
                     'flow_usd_m': inputs.get('flow_usd', 0),
                     'override': inputs.get('override', 'None'),
@@ -415,38 +395,36 @@ with tab2:
                 }
 
                 updated = save_to_csv(record, market_key)
-                st.success(f"✅ Saved to data/processed/{market_key}_regime_log.csv ({len(updated)} total records)")
+                st.success(f"✅ Saved — {len(updated)} total records")
 
                 with st.expander("View Saved Data"):
                     st.dataframe(updated.tail())
-
     else:
         st.info("Run calculation in Data Entry tab first.")
 
-
-# ── TAB 3 — Logs ─────────────────────────────────────────────────────────────
-
 with tab3:
     st.header("Classification Logs")
-
     df_log = load_log(market_key)
 
     if not df_log.empty:
         st.success(f"{len(df_log)} records logged for {market}")
 
-        # Summary metrics
         col1, col2, col3 = st.columns(3)
         regime_counts = df_log['regime'].value_counts()
         col1.metric("Risk-On",     regime_counts.get('Risk-On', 0))
         col2.metric("Defensive",   regime_counts.get('Defensive', 0))
         col3.metric("Instability", regime_counts.get('Instability', 0))
 
-        st.markdown("---")
+        if 'interbank_spread_bps' in df_log.columns:
+            st.subheader("Interbank Spread Trend")
+            df_log['date'] = pd.to_datetime(df_log['date'])
+            st.line_chart(df_log.sort_values('date').set_index('date')['interbank_spread_bps'])
 
-        # Recent logs table
+        st.markdown("---")
         st.subheader("Recent Classifications")
         display_cols = ['date', 'regime', 'score', 'source']
-        extra = ['fx_rate', 'fx_volatility_pct', 'policy_direction', 'cpi_yoy_pct', 'override']
+        extra = ['fx_rate', 'fx_volatility_pct', 'interbank_spread_bps',
+                 'policy_direction', 'cpi_yoy_pct', 'override']
         display_cols += [c for c in extra if c in df_log.columns]
 
         st.dataframe(
@@ -462,18 +440,31 @@ with tab3:
     else:
         st.info("No classifications saved yet. Use Data Entry tab to log your first entry.")
 
-    # Street-level intelligence log
     st.markdown("---")
     with st.expander("📍 Add Street-Level Observation"):
         observation = st.text_area(
             "Street-level intelligence",
             placeholder="FX liquidity drying up, import delays, fuel shortages, USD hoarding..."
         )
-        obs_confidence = st.selectbox(
-            "Confidence",
-            ["Low", "Medium", "High"],
-            key='obs_confidence'
-        )
+
+        KEYWORDS = {
+            'hoarding': -1, 'shortage': -1, 'delays': -1,
+            'liquidity': -1, 'queues': -1, 'scarcity': -1,
+            'stable': 1, 'improving': 1, 'abundant': 1,
+            'normal': 1, 'flowing': 1
+        }
+
+        sentiment = 0
+        matched = []
+        if observation:
+            obs_lower = observation.lower()
+            matched = [k for k in KEYWORDS if k in obs_lower]
+            sentiment = sum(KEYWORDS[k] for k in matched)
+            if matched:
+                st.markdown(f"**Detected signals:** `{', '.join(matched)}` → sentiment score: `{sentiment:+d}`")
+
+        obs_confidence = st.selectbox("Confidence", ["Low", "Medium", "High"], key='obs_confidence')
+
         if st.button("Log Observation", type="secondary"):
             if observation:
                 obs_record = {
@@ -482,7 +473,9 @@ with tab3:
                     'market': market_key,
                     'type': 'street_intelligence',
                     'observation': observation,
-                    'confidence': obs_confidence
+                    'confidence': obs_confidence,
+                    'sentiment_score': sentiment,
+                    'signals_detected': ', '.join(matched)
                 }
                 os.makedirs('data/processed', exist_ok=True)
                 obs_file = f"data/processed/{market_key}_observations.csv"
@@ -492,10 +485,9 @@ with tab3:
                 except FileNotFoundError:
                     updated = pd.DataFrame([obs_record])
                 updated.to_csv(obs_file, index=False)
-                st.success(f"Observation logged — {len(updated)} total observations")
+                st.success(f"✅ Observation logged — sentiment: {sentiment:+d} — {len(updated)} total")
             else:
                 st.warning("Enter an observation before logging.")
-
 
 if __name__ == "__main__":
     pass
