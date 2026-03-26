@@ -69,8 +69,9 @@ KENYA_KEYWORDS = [
 
 def score_text(text: str) -> tuple:
     text_lower = text.lower()
-    neg = {k: v for k, v in NEGATIVE_KEYWORDS.items() if k in text_lower}
-    pos = {k: v for k, v in POSITIVE_KEYWORDS.items() if k in text_lower}
+    # Sort by length desc so multi-word phrases match before single words
+    neg = {k: v for k, v in sorted(NEGATIVE_KEYWORDS.items(), key=lambda x: len(x[0]), reverse=True) if k in text_lower}
+    pos = {k: v for k, v in sorted(POSITIVE_KEYWORDS.items(), key=lambda x: len(x[0]), reverse=True) if k in text_lower}
     score = sum(pos.values()) + sum(neg.values())
     return score, list(pos.keys()) + list(neg.keys())
 
