@@ -1,4 +1,5 @@
 """CBK Collector — FX rate + macro indicators."""
+
 import requests
 import pandas as pd
 from datetime import datetime
@@ -7,29 +8,32 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class CBKCollector:
     """
     Collects KES macro indicators from public sources.
-    
+
     Primary: ExchangeRate-API (FX rate)
     Secondary: CBK public data (interbank, policy, reserves)
     Fallback: Last known values for missing fields
     """
 
     FX_URL = "https://open.er-api.com/v6/latest/USD"
-    
+
     # CBK publishes these as structured data
     CBK_RATES_URL = "https://www.centralbank.go.ke/api/interest-rates"
     CBK_RESERVES_URL = "https://www.centralbank.go.ke/api/forex-reserves"
 
     # Last known fallback values (update these manually weekly)
     FALLBACK = {
-        "policy_rate_pct": 8.75,       # CBK base rate as of early 2026
-        "interbank_rate_pct": 8.682,    # CBK KESONIA March 18 2026
-        "fx_reserves_usd_bn": 14.597,      # CBK bulletin March 5 2026
-        "inflation_rate_pct": 4.4,      # KNBS January 2026
-        "t_bill_91_day_pct": 7.5636,      # CBK auction March 19 2026
+        "policy_rate_pct": 8.75,  # CBK MPC held Apr 8 2026
+        "interbank_rate_pct": 8.682,  # CBK KESONIA March 18 2026
+        "fx_reserves_usd_bn": 13.354,  # CBK MPC statement Apr 8 2026
+        "inflation_rate_pct": 4.4,  # KNBS March 2026
+        "t_bill_91_day_pct": 7.5636,  # CBK auction March 19 2026
     }
+
+    FALLBACK_DATE = "2026-04-08"  # Date of last manual update
 
     def __init__(self):
         self.session = requests.Session()
