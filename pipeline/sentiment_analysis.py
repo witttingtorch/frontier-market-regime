@@ -20,13 +20,16 @@ DATA_DIR = BASE_DIR / "data" / "processed"
 OUTPUT_DIR = BASE_DIR / "data" / "logs"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
+
 # ── Load data ─────────────────────────────────────────────────────────────────
 def load_data(path: Path = DATA_DIR / "nairobi_sentiment_log.csv") -> pd.DataFrame:
     """Load and clean the sentiment log."""
     df = pd.read_csv(path)
     df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
     df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df["sentiment_score"] = pd.to_numeric(df["sentiment_score"], errors="coerce").fillna(0)
+    df["sentiment_score"] = pd.to_numeric(
+        df["sentiment_score"], errors="coerce"
+    ).fillna(0)
 
     def classify_topic(src: str) -> str:
         src = str(src).lower()
@@ -88,17 +91,17 @@ def summary_stats(df: pd.DataFrame) -> dict:
 
 # ── Plotting ──────────────────────────────────────────────────────────────────
 COLORS = {
-    "Fuel":          "#E24B4A",
-    "Inflation":     "#639922",
-    "Economy":       "#378ADD",
-    "CBK Policy":    "#BA7517",
-    "Business Daily":"#7F77DD",
-    "Other":         "#888780",
+    "Fuel": "#E24B4A",
+    "Inflation": "#639922",
+    "Economy": "#378ADD",
+    "CBK Policy": "#BA7517",
+    "Business Daily": "#7F77DD",
+    "Other": "#888780",
 }
 
 SENTIMENT_COLORS = {
     "positive": "#639922",
-    "neutral":  "#888780",
+    "neutral": "#888780",
     "negative": "#E24B4A",
 }
 
@@ -125,7 +128,11 @@ def plot_dashboard(df: pd.DataFrame, signals: Counter, stats: dict, out_path: Pa
     ax1.pie(
         sizes,
         labels=labels,
-        colors=[SENTIMENT_COLORS["positive"], SENTIMENT_COLORS["neutral"], SENTIMENT_COLORS["negative"]],
+        colors=[
+            SENTIMENT_COLORS["positive"],
+            SENTIMENT_COLORS["neutral"],
+            SENTIMENT_COLORS["negative"],
+        ],
         startangle=90,
         wedgeprops={"edgecolor": "white", "linewidth": 1.5},
         textprops={"fontsize": 9},
@@ -136,7 +143,13 @@ def plot_dashboard(df: pd.DataFrame, signals: Counter, stats: dict, out_path: Pa
     ax2 = fig.add_subplot(gs[0, 1])
     by_topic = stats["by_topic"].sort_values("avg_score")
     colors = [COLORS.get(t, "#888780") for t in by_topic.index]
-    bars = ax2.barh(by_topic.index, by_topic["avg_score"], color=colors, edgecolor="white", height=0.55)
+    bars = ax2.barh(
+        by_topic.index,
+        by_topic["avg_score"],
+        color=colors,
+        edgecolor="white",
+        height=0.55,
+    )
     ax2.axvline(0, color="#ccc", linewidth=0.8, linestyle="--")
     for bar, val in zip(bars, by_topic["avg_score"]):
         ax2.text(
@@ -155,11 +168,26 @@ def plot_dashboard(df: pd.DataFrame, signals: Counter, stats: dict, out_path: Pa
 
     # 3 ── Top 10 signals (horizontal bar)
     ax3 = fig.add_subplot(gs[0, 2])
-    neg_signals = {"fuel shortage", "shortage", "hoarding", "rationing", "depreciation", "pressure", "intervention"}
+    neg_signals = {
+        "fuel shortage",
+        "shortage",
+        "hoarding",
+        "rationing",
+        "depreciation",
+        "pressure",
+        "intervention",
+    }
     top_sigs = signals.most_common(10)
     sig_labels = [s[0] for s in top_sigs][::-1]
     sig_vals = [s[1] for s in top_sigs][::-1]
-    sig_colors = [SENTIMENT_COLORS["negative"] if s in neg_signals else SENTIMENT_COLORS["positive"] for s in sig_labels]
+    sig_colors = [
+        (
+            SENTIMENT_COLORS["negative"]
+            if s in neg_signals
+            else SENTIMENT_COLORS["positive"]
+        )
+        for s in sig_labels
+    ]
     ax3.barh(sig_labels, sig_vals, color=sig_colors, edgecolor="white", height=0.6)
     ax3.set_title("Top 10 signals detected", fontsize=11)
     ax3.set_xlabel("Frequency", fontsize=9)
@@ -194,12 +222,20 @@ def plot_dashboard(df: pd.DataFrame, signals: Counter, stats: dict, out_path: Pa
     ax5 = fig.add_subplot(gs[1, 2])
     ax5.hist(
         df["sentiment_score"],
-        bins=range(int(df["sentiment_score"].min()) - 1, int(df["sentiment_score"].max()) + 2),
+        bins=range(
+            int(df["sentiment_score"].min()) - 1, int(df["sentiment_score"].max()) + 2
+        ),
         color="#378ADD",
         edgecolor="white",
         rwidth=0.75,
     )
-    ax5.axvline(stats["avg_sentiment"], color="#E24B4A", linewidth=1.5, linestyle="--", label=f"Mean {stats['avg_sentiment']}")
+    ax5.axvline(
+        stats["avg_sentiment"],
+        color="#E24B4A",
+        linewidth=1.5,
+        linestyle="--",
+        label=f"Mean {stats['avg_sentiment']}",
+    )
     ax5.set_title("Score distribution", fontsize=11)
     ax5.set_xlabel("Sentiment score", fontsize=9)
     ax5.set_ylabel("Count", fontsize=9)
@@ -237,7 +273,15 @@ def write_report(stats: dict, signals: Counter, out_path: Path):
         "| Signal | Count | Polarity |",
         "|---|---|---|",
     ]
-    neg_sigs = {"fuel shortage", "shortage", "hoarding", "rationing", "depreciation", "pressure", "intervention"}
+    neg_sigs = {
+        "fuel shortage",
+        "shortage",
+        "hoarding",
+        "rationing",
+        "depreciation",
+        "pressure",
+        "intervention",
+    }
     for sig, cnt in signals.most_common(15):
         polarity = "🔴 Negative" if sig in neg_sigs else "🟢 Positive"
         lines.append(f"| {sig} | {cnt} | {polarity} |")
@@ -263,10 +307,25 @@ def street_intelligence_summary(stats: dict, signals: Counter) -> str:
     """
     by_topic = stats["by_topic"]
     top_neg = signals.most_common(20)
-    neg_sigs = {"fuel shortage", "shortage", "hoarding", "rationing",
-                "depreciation", "pressure", "intervention"}
-    pos_sigs = {"stable", "growth", "investment", "inflows",
-                "reserves increase", "liquidity", "surplus", "rallies"}
+    neg_sigs = {
+        "fuel shortage",
+        "shortage",
+        "hoarding",
+        "rationing",
+        "depreciation",
+        "pressure",
+        "intervention",
+    }
+    pos_sigs = {
+        "stable",
+        "growth",
+        "investment",
+        "inflows",
+        "reserves increase",
+        "liquidity",
+        "surplus",
+        "rallies",
+    }
 
     neg_found = [s for s, _ in top_neg if s in neg_sigs][:3]
     pos_found = [s for s, _ in top_neg if s in pos_sigs][:3]
@@ -298,7 +357,9 @@ def run(csv_path: Path | None = None):
 
     print(f"Loading data from {csv_path} ...")
     df = load_data(csv_path)
-    print(f"  {len(df)} rows, {df['date'].nunique()} unique dates, topics: {sorted(df['topic'].unique())}")
+    print(
+        f"  {len(df)} rows, {df['date'].nunique()} unique dates, topics: {sorted(df['topic'].unique())}"
+    )
 
     signals = parse_signals(df)
     stats = summary_stats(df)
@@ -316,11 +377,14 @@ def run(csv_path: Path | None = None):
         print(f"  {cnt:>4}  {sig}")
 
     plot_dashboard(
-        df, signals, stats,
+        df,
+        signals,
+        stats,
         out_path=OUTPUT_DIR / "sentiment_dashboard.png",
     )
     write_report(
-        stats, signals,
+        stats,
+        signals,
         out_path=OUTPUT_DIR / "sentiment_report.md",
     )
 
